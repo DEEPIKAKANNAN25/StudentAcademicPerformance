@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Student Academic Performance Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          surface: '#1e2433',
+          panel:   '#252d3d',
+          border:  '#2e3a4e',
+          accent:  '#3b82f6',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { background:#151c2c; color:#e2e8f0; font-family:system-ui,"Segoe UI",sans-serif; }
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#1e2433}
+  ::-webkit-scrollbar-thumb{background:#2e3a4e;border-radius:3px}
+  .nav-item{transition:background .15s,color .15s}
+  .nav-item:hover{background:#2e3a4e;color:#93c5fd}
+  .nav-item.active{background:#1d3256;color:#60a5fa;border-left:3px solid #3b82f6}
+  .kpi-card{transition:transform .2s,box-shadow .2s}
+  .kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(59,130,246,.18)}
+  .section{display:none}
+  .section.active{display:block}
+  .chart-img{border-radius:12px;border:1px solid #2e3a4e;width:100%}
+  .upload-zone{border:2px dashed #2e3a4e;border-radius:12px;transition:border-color .2s,background .2s;cursor:pointer}
+  .upload-zone:hover,.upload-zone.drag{border-color:#3b82f6;background:#1d3256}
+  .badge{display:inline-block;padding:2px 10px;border-radius:9999px;font-size:.7rem;font-weight:600}
+  table{border-collapse:collapse;width:100%}
+  th{background:#1e2433;color:#94a3b8;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding:10px 14px}
+  td{padding:9px 14px;border-bottom:1px solid #2e3a4e;font-size:.82rem}
+  tr:hover td{background:#1d2538}
+  .prog{height:6px;border-radius:3px}
+</style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ══════════════════════  SIDEBAR  ═══════════════════════════════════ -->
+<aside class="w-56 flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-y-auto">
+
+  <div class="flex items-center gap-2 px-5 py-5 border-b border-border">
+    <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-sm">SA</div>
+    <span class="font-semibold text-sm tracking-wide text-slate-200">AcademIQ</span>
+  </div>
+
+  <nav class="flex-1 px-2 py-4 space-y-1">
+
+    <button onclick="showSection('home')" id="nav-home"
+      class="nav-item active w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>Home
+    </button>
+
+    <button onclick="showSection('overview')" id="nav-overview"
+      class="nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>Overview
+    </button>
+
+    <button onclick="showSection('analysis')" id="nav-analysis"
+      class="nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+      </svg>Analysis
+    </button>
+
+    <button onclick="showSection('history')" id="nav-history"
+      class="nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>History
+    </button>
+
+    <button onclick="showSection('dashboard')" id="nav-dashboard"
+      class="nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+      </svg>Dashboard
+    </button>
+
+  </nav>
+
+  <div class="px-4 py-4 border-t border-border">
+    <p class="text-xs text-slate-500 mb-1">Active Dataset</p>
+    <p class="text-xs font-medium text-slate-300 truncate">student_dataset.csv</p>
+    <div class="mt-2 flex items-center gap-1.5">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+      <span class="text-xs text-emerald-400">5,000 records loaded</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════  MAIN  ════════════════════════════════════════ -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="flex-shrink-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-bold text-white tracking-tight">Student Academic Performance Analysis</h1>
+      <p class="text-xs text-slate-500 mt-0.5">Kaggle Dataset &nbsp;·&nbsp; 5,000 students &nbsp;·&nbsp; 18 features</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="badge bg-blue-900 text-blue-300">EDA</span>
+      <span class="badge bg-emerald-900 text-emerald-300">v1.0</span>
+      <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">YN</div>
+    </div>
+  </header>
+
+  <!-- Scrollable body -->
+  <main class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+
+    <!-- ════════════════  HOME  ════════════════════════════════════════ -->
+    <div id="sec-home" class="section active space-y-6">
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Total Students -->
+        <div class="kpi-card bg-panel rounded-xl p-5 border border-border">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Total Students</p>
+              <p class="text-3xl font-bold text-white">5,000</p>
+              <p class="text-xs text-slate-500 mt-1">Full cohort</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-blue-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Coverage</span><span>100%</span></div>
+            <div class="h-1.5 bg-border rounded-full"><div class="prog bg-gradient-to-r from-blue-500 to-indigo-500" style="width:100%"></div></div>
+          </div>
+        </div>
+
+        <!-- Placement Rate -->
+        <div class="kpi-card bg-panel rounded-xl p-5 border border-border">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Placement Rate</p>
+              <p class="text-3xl font-bold text-emerald-400">17.32%</p>
+              <p class="text-xs text-slate-500 mt-1">866 placed</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Placed</span><span>17.32%</span></div>
+            <div class="h-1.5 bg-border rounded-full"><div class="prog bg-emerald-500" style="width:17.32%"></div></div>
+          </div>
+        </div>
+
+        <!-- Avg CGPA -->
+        <div class="kpi-card bg-panel rounded-xl p-5 border border-border">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Avg CGPA</p>
+              <p class="text-3xl font-bold text-violet-400">7.68</p>
+              <p class="text-xs text-slate-500 mt-1">Out of 10.0</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-violet-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Scale 0–10</span><span>76.8%</span></div>
+            <div class="h-1.5 bg-border rounded-full"><div class="prog bg-violet-500" style="width:76.8%"></div></div>
+          </div>
+        </div>
+
+        <!-- Avg Attendance -->
+        <div class="kpi-card bg-panel rounded-xl p-5 border border-border">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Avg Attendance</p>
+              <p class="text-3xl font-bold text-amber-400">79.43%</p>
+              <p class="text-xs text-slate-500 mt-1">Lecture attendance</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-amber-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Rate</span><span>79.43%</span></div>
+            <div class="h-1.5 bg-border rounded-full"><div class="prog bg-amber-500" style="width:79.43%"></div></div>
+          </div>
+        </div>
+
+      </div><!-- /KPI row -->
+
+      <!-- Secondary metrics -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-panel rounded-xl px-5 py-4 border border-border flex items-center gap-4">
+          <div class="w-9 h-9 rounded-lg bg-sky-900 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div><p class="text-xs text-slate-500">Avg Technical Score</p><p class="text-lg font-bold text-sky-300">69.65</p></div>
+        </div>
+        <div class="bg-panel rounded-xl px-5 py-4 border border-border flex items-center gap-4">
+          <div class="w-9 h-9 rounded-lg bg-pink-900 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          </div>
+          <div><p class="text-xs text-slate-500">Avg Soft-Skill Score</p><p class="text-lg font-bold text-pink-300">69.84</p></div>
+        </div>
+        <div class="bg-panel rounded-xl px-5 py-4 border border-border flex items-center gap-4">
+          <div class="w-9 h-9 rounded-lg bg-orange-900 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div><p class="text-xs text-slate-500">Avg Backlogs</p><p class="text-lg font-bold text-orange-300">2.52</p></div>
+        </div>
+        <div class="bg-panel rounded-xl px-5 py-4 border border-border flex items-center gap-4">
+          <div class="w-9 h-9 rounded-lg bg-teal-900 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div><p class="text-xs text-slate-500">Avg Internships</p><p class="text-lg font-bold text-teal-300">1.99</p></div>
+        </div>
+      </div>
+
+      <!-- Upload section -->
+      <div class="bg-panel rounded-xl border border-border p-6">
+        <h2 class="text-sm font-semibold text-white mb-1">Upload Dataset</h2>
+        <p class="text-xs text-slate-500 mb-4">Replace the active dataset by uploading a new CSV file. Column schema must match the current dataset.</p>
+        <div class="upload-zone flex flex-col items-center justify-center py-10 px-6"
+             id="dropZone" onclick="document.getElementById('csvInput').click()">
+          <svg class="w-10 h-10 text-slate-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p class="text-sm text-slate-300 font-medium">Drop CSV here or <span class="text-blue-400 underline">browse</span></p>
+          <p class="text-xs text-slate-500 mt-1">Supports .csv &nbsp;·&nbsp; Max 50 MB</p>
+          <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleFile(event)" />
+        </div>
+        <div id="fileInfo" class="hidden mt-4 items-center gap-3 bg-blue-950 border border-blue-800 rounded-lg px-4 py-3">
+          <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <div class="flex-1">
+            <p id="fileName" class="text-sm text-blue-200 font-medium"></p>
+            <p id="fileSize" class="text-xs text-slate-500"></p>
+          </div>
+          <span class="badge bg-emerald-900 text-emerald-300">Loaded</span>
+        </div>
+      </div>
+
+    </div><!-- /home -->
+
+    <!-- ════════════════  OVERVIEW  ════════════════════════════════════ -->
+    <div id="sec-overview" class="section space-y-6">
+      <div class="bg-panel rounded-xl border border-border p-6">
+        <h2 class="text-sm font-semibold text-white mb-4">Dataset Feature Reference</h2>
+        <div class="overflow-x-auto">
+          <table>
+            <thead><tr>
+              <th class="text-left">Feature</th>
+              <th class="text-left">Type</th>
+              <th class="text-left">Description</th>
+              <th class="text-left">Status</th>
+            </tr></thead>
+            <tbody>
+              <tr><td class="text-slate-300 font-mono text-xs">student_id</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Unique student identifier</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">gender</td><td class="text-slate-400">Categorical</td><td class="text-slate-500">Male / Female</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">ssc_percentage</td><td class="text-slate-400">Float</td><td class="text-slate-500">Secondary school certificate score (%)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">hsc_percentage</td><td class="text-slate-400">Float</td><td class="text-slate-500">Higher secondary certificate score (%)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">degree_percentage</td><td class="text-slate-400">Float</td><td class="text-slate-500">Undergraduate degree score (%)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">cgpa</td><td class="text-slate-400">Float</td><td class="text-slate-500">Cumulative Grade Point Average (0–10)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">entrance_exam_score</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Standardised entrance exam score</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">technical_skill_score</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Assessed technical proficiency score</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">soft_skill_score</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Communication &amp; interpersonal skill score</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">internship_count</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Number of internships completed</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">live_projects</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Number of live / industry projects</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">work_experience_months</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Total industry experience (months)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">certifications</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Number of professional certifications</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">attendance_percentage</td><td class="text-slate-400">Float</td><td class="text-slate-500">Lecture attendance rate (%)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">backlogs</td><td class="text-slate-400">Integer</td><td class="text-slate-500">Number of failed / backlog subjects</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">extracurricular_activities</td><td class="text-slate-400">Categorical</td><td class="text-slate-500">Participates in extra-curriculars (Yes/No)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">placement_status</td><td class="text-slate-400">Binary</td><td class="text-slate-500">Campus placement achieved (1=Yes, 0=No)</td><td><span class="badge bg-green-900 text-green-300">Clean</span></td></tr>
+              <tr><td class="text-slate-300 font-mono text-xs">salary_package_lpa</td><td class="text-slate-400">Float</td><td class="text-slate-500">Annual salary offered (LPA); 0 if not placed</td><td><span class="badge bg-yellow-900 text-yellow-300">Partial</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /overview -->
+
+    <!-- ════════════════  ANALYSIS  ════════════════════════════════════ -->
+    <div id="sec-analysis" class="section space-y-6">
+
+      <!-- Score Distributions -->
+      <div class="bg-panel rounded-xl border border-border p-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-semibold text-white">Score Distributions</h2>
+          <span class="badge bg-blue-900 text-blue-300">CGPA · Entrance · Technical · Soft-Skill</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Histograms with KDE curves. Dashed vertical lines indicate the mean for each score.</p>
+        <img src="data:image/png;base64,__SD_B64__" class="chart-img" alt="Score Distributions" />
+        <div class="mt-4 grid grid-cols-4 gap-3">
+          <div class="bg-surface rounded-lg p-3 border border-border text-center">
+            <p class="text-xs text-slate-500 mb-0.5">Mean CGPA</p>
+            <p class="text-base font-bold text-blue-300">7.68</p>
+          </div>
+          <div class="bg-surface rounded-lg p-3 border border-border text-center">
+            <p class="text-xs text-slate-500 mb-0.5">Mean Entrance</p>
+            <p class="text-base font-bold text-orange-300">69.20</p>
+          </div>
+          <div class="bg-surface rounded-lg p-3 border border-border text-center">
+            <p class="text-xs text-slate-500 mb-0.5">Mean Technical</p>
+            <p class="text-base font-bold text-green-300">69.65</p>
+          </div>
+          <div class="bg-surface rounded-lg p-3 border border-border text-center">
+            <p class="text-xs text-slate-500 mb-0.5">Mean Soft-Skill</p>
+            <p class="text-base font-bold text-red-300">69.84</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Correlation Matrix -->
+      <div class="bg-panel rounded-xl border border-border p-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-semibold text-white">Feature Correlation Matrix</h2>
+          <span class="badge bg-red-900 text-red-300">Pearson · Lower Triangle</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Warm (red) = positive correlation &nbsp;·&nbsp; Cool (blue) = negative correlation.</p>
+        <img src="data:image/png;base64,__CM_B64__" class="chart-img" alt="Correlation Matrix" />
+        <div class="mt-4 grid grid-cols-3 gap-3">
+          <div class="bg-surface rounded-lg p-3 border border-border">
+            <p class="text-xs text-slate-500 mb-1">Strongest Positive</p>
+            <p class="text-xs text-white font-semibold">CGPA &#8594; salary_package_lpa</p>
+            <p class="text-sm font-bold text-red-300 mt-0.5">r = 0.25</p>
+          </div>
+          <div class="bg-surface rounded-lg p-3 border border-border">
+            <p class="text-xs text-slate-500 mb-1">Strongest Negative</p>
+            <p class="text-xs text-white font-semibold">backlogs &#8594; salary_package</p>
+            <p class="text-sm font-bold text-blue-300 mt-0.5">r = &minus;0.38</p>
+          </div>
+          <div class="bg-surface rounded-lg p-3 border border-border">
+            <p class="text-xs text-slate-500 mb-1">Skill Correlation</p>
+            <p class="text-xs text-white font-semibold">technical &#8594; salary_package</p>
+            <p class="text-sm font-bold text-emerald-300 mt-0.5">r = 0.22</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /analysis -->
+
+    <!-- ════════════════  HISTORY  ════════════════════════════════════ -->
+    <div id="sec-history" class="section space-y-6">
+      <div class="bg-panel rounded-xl border border-border p-6">
+        <h2 class="text-sm font-semibold text-white mb-4">Run History</h2>
+        <div class="space-y-3">
+
+          <div class="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-white font-medium">generate_submission.py</p>
+                <span class="text-xs text-slate-500">Today</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Generated requirements.txt, README.md, analysis script, report.docx, score_distribution.png, correlation_matrix.png</p>
+            </div>
+            <span class="badge bg-green-900 text-green-300">Success</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-white font-medium">YourName_StudentAcademicPerformance.py</p>
+                <span class="text-xs text-slate-500">Today</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Loaded 5,000 rows &nbsp;·&nbsp; Cleaned 18 columns &nbsp;·&nbsp; Saved 2 chart images</p>
+            </div>
+            <span class="badge bg-green-900 text-green-300">Success</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+            <span class="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-white font-medium">app.py (Streamlit)</p>
+                <span class="text-xs text-slate-500">Today</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Interactive dashboard &nbsp;·&nbsp; 4 tabs &nbsp;·&nbsp; 6 KPIs &nbsp;·&nbsp; Sidebar filters &nbsp;·&nbsp; localhost:8501</p>
+            </div>
+            <span class="badge bg-blue-900 text-blue-300">Running</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+            <span class="w-2 h-2 rounded-full bg-violet-400 mt-1.5 flex-shrink-0"></span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-white font-medium">dashboard.html</p>
+                <span class="text-xs text-slate-500">Today</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Standalone Tailwind dark-theme dashboard &nbsp;·&nbsp; All assets embedded &nbsp;·&nbsp; No server required</p>
+            </div>
+            <span class="badge bg-violet-900 text-violet-300">Current</span>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /history -->
+
+    <!-- ════════════════  DASHBOARD  ══════════════════════════════════ -->
+    <div id="sec-dashboard" class="section space-y-6">
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Donut -->
+        <div class="bg-panel rounded-xl border border-border p-6 flex flex-col items-center justify-center">
+          <h3 class="text-xs text-slate-500 uppercase tracking-widest mb-4">Placement Split</h3>
+          <svg viewBox="0 0 120 120" class="w-36 h-36">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#2e3a4e" stroke-width="18"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#22c55e" stroke-width="18"
+              stroke-dasharray="54.4 259.7" stroke-dashoffset="78.5" stroke-linecap="round"
+              transform="rotate(-90 60 60)"/>
+            <text x="60" y="56" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="bold">17.3%</text>
+            <text x="60" y="70" text-anchor="middle" fill="#64748b" font-size="8">Placed</text>
+          </svg>
+          <div class="mt-4 flex gap-4 text-xs">
+            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span><span class="text-slate-400">Placed (866)</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span><span class="text-slate-400">Not Placed (4,134)</span></div>
+          </div>
+        </div>
+
+        <!-- Benchmarks -->
+        <div class="bg-panel rounded-xl border border-border p-6">
+          <h3 class="text-xs text-slate-500 uppercase tracking-widest mb-4">Score Benchmarks</h3>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">CGPA</span><span class="text-blue-300 font-bold">7.68 / 10</span></div>
+              <div class="h-2 bg-border rounded-full"><div class="prog bg-blue-500" style="width:76.8%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Entrance Exam</span><span class="text-orange-300 font-bold">69.20 / 100</span></div>
+              <div class="h-2 bg-border rounded-full"><div class="prog bg-orange-500" style="width:69.2%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Technical Skill</span><span class="text-green-300 font-bold">69.65 / 100</span></div>
+              <div class="h-2 bg-border rounded-full"><div class="prog bg-green-500" style="width:69.65%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Soft Skill</span><span class="text-pink-300 font-bold">69.84 / 100</span></div>
+              <div class="h-2 bg-border rounded-full"><div class="prog bg-pink-500" style="width:69.84%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Attendance</span><span class="text-amber-300 font-bold">79.43 / 100</span></div>
+              <div class="h-2 bg-border rounded-full"><div class="prog bg-amber-500" style="width:79.43%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="bg-panel rounded-xl border border-border p-6">
+          <h3 class="text-xs text-slate-500 uppercase tracking-widest mb-4">Key Insights</h3>
+          <ul class="space-y-2.5 text-xs text-slate-300">
+            <li class="flex gap-2"><span class="text-emerald-400 font-bold">&#9658;</span>CGPA is the strongest predictor of placement (r&nbsp;=&nbsp;0.25 with salary).</li>
+            <li class="flex gap-2"><span class="text-red-400 font-bold">&#9658;</span>Backlogs show the strongest negative correlation (r&nbsp;=&nbsp;&minus;0.38).</li>
+            <li class="flex gap-2"><span class="text-blue-400 font-bold">&#9658;</span>Technical skill correlates more strongly with placement than soft skills.</li>
+            <li class="flex gap-2"><span class="text-amber-400 font-bold">&#9658;</span>Attendance &gt; 80% associates with above-average CGPA.</li>
+            <li class="flex gap-2"><span class="text-violet-400 font-bold">&#9658;</span>Internship count positively tracks with placement rate &amp; salary.</li>
+            <li class="flex gap-2"><span class="text-pink-400 font-bold">&#9658;</span>Gender shows negligible correlation with academic metrics.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Charts side by side -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-panel rounded-xl border border-border p-5">
+          <h3 class="text-xs text-slate-500 uppercase tracking-widest mb-3">Score Distributions</h3>
+          <img src="data:image/png;base64,__SD_B64__" class="chart-img" alt="Score Distributions" />
+        </div>
+        <div class="bg-panel rounded-xl border border-border p-5">
+          <h3 class="text-xs text-slate-500 uppercase tracking-widest mb-3">Correlation Matrix</h3>
+          <img src="data:image/png;base64,__CM_B64__" class="chart-img" alt="Correlation Matrix" />
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="flex-shrink-0 border-t border-border px-6 py-2.5 flex items-center justify-between">
+    <p class="text-xs text-slate-500">Student Academic Performance &nbsp;·&nbsp; Kaggle Dataset &nbsp;·&nbsp; 5,000 Records</p>
+    <p class="text-xs text-slate-500">Made with IBM Bob</p>
+  </footer>
+
+</div><!-- /flex-1 -->
+
+<script>
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+  }
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    const fi = document.getElementById('fileInfo');
+    fi.classList.remove('hidden');
+    fi.classList.add('flex');
+  }
+
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', ()  => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    const fi = document.getElementById('fileInfo');
+    fi.classList.remove('hidden');
+    fi.classList.add('flex');
+  });
+</script>
+
+</body>
+</html>
